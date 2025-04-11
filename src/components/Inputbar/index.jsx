@@ -1,44 +1,58 @@
 import "./Inputbar.css";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useContext } from "react";
+import TodoContext from "../../components/todoContext";
+
 function InputBar() {
+  const { tasks, setTasks, taskText, setTaskText } = useContext(TodoContext);
+
+  useEffect(() => {
+    const storedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    setTasks(storedTasks);
+  }, [setTasks]);
+
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  const handleAddTask = (e) => {
+    e.preventDefault();
+    if (taskText.trim() === "") {
+      alert("Please enter a task!");
+      return;
+    }
+    setTasks([...tasks, taskText.trim()]);
+    setTaskText("");
+  };
+
+  const handleDeleteTask = (taskToDelete) => {
+    const updatedTasks = tasks.filter((task) => task !== taskToDelete);
+    setTasks(updatedTasks);
+  };
+
   return (
     <div className="input_bar">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const taskList = document.getElementById("taskList");
-          const taskText = document.querySelector("input").value.trim();
-          if (taskText === "") {
-            alert("pleasr enter a task0 ");
-            return;
-          }
-          const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-          tasks.push(taskText);
-          localStorage.setItem("tasks", JSON.stringify(tasks));
-
-          const taskItem = document.createElement("div");
-          taskItem.className = "task_item";
-          taskItem.innerHTML = `
-            <span>${taskText}</span>
-            <button class="delete_button">Delete</button>
-          `;
-          taskList.appendChild(taskItem);
-          document.querySelector("input").value = "";
-          const deleteButton = taskItem.querySelector(".delete_button");
-          deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-          deleteButton.addEventListener("click", () => {
-            taskList.removeChild(taskItem);
-            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-            const updatedTasks = tasks.filter((task) => task !== taskText);
-            localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-          });
-        }}
-        action="submit"
-      >
-        <input type="text" placeholder="Type your message..." />
+      <form onSubmit={handleAddTask}>
+        <input
+          type="text"
+          placeholder="Type your message..."
+          value={taskText}
+          onChange={(e) => setTaskText(e.target.value)}
+        />
         <button type="submit">Send</button>
-        <div id="taskList"></div>
       </form>
+      <div id="taskList">
+        {tasks.map((task, index) => (
+          <div key={index} className="task_item">
+            <span>{task}</span>
+            <button
+              className="delete_button"
+              onClick={() => handleDeleteTask(task)}
+            >
+              <i className="fas fa-trash"></i>
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
